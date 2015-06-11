@@ -1,20 +1,19 @@
 package com.iitb.android.randoms.app;
 
+
 import android.graphics.Color;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -26,89 +25,100 @@ import java.util.List;
 public class GraphFragment extends Fragment{
 
     List<ParseObject> mNumbers;
-    ArrayList<String> mNumbersForGraph;
+    ArrayList<BarEntry> valueSet1;
 
-    private RelativeLayout mainLayout;
-    private LineChart mChart;
+    BarChart chart;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_graph, container, false);
-        TextView view = (TextView) rootView.findViewById(R.id.graph);
-
-        mainLayout = (RelativeLayout) rootView.findViewById(R.id.mainLayout);
-        mChart = new LineChart(getActivity());
-        mainLayout.addView(mChart);
-
-        // Customize line chart
-        mChart.setDescription("Random numbers");
-        mChart.setNoDataTextDescription("No data for the moment");
-
-        // enable value highlighting
-        mChart.setHighlightEnabled(true);
-
-        // enable touch gestures
-        mChart.setTouchEnabled(true);
-
-        // enable dragging and scaling
-        mChart.setDragEnabled(true);
-        mChart.setScaleEnabled(true);
-        mChart.setDrawGridBackground(false);
-
-
-        // enable pinch to zoom
-        mChart.setPinchZoom(true);
-
-        // set background color
-        mChart.setBackgroundColor(Color.LTGRAY);
-
-
-        // data management
-        LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChart.setData(data);
-
-        // get legend object
-        Legend legend = mChart.getLegend();
-        legend.setForm(Legend.LegendForm.LINE);
-        legend.setTextColor(Color.WHITE);
-
-        XAxis xl = mChart.getXAxis();
-        xl.setTextColor(Color.WHITE);
-        xl.setDrawGridLines(false);
-        xl.setAvoidFirstLastClipping(true);
-
-        YAxis yl = mChart.getAxisLeft();
-        yl.setAxisMaxValue(120f);
-        yl.setDrawGridLines(true);
-
-        YAxis yl2 = mChart.getAxisRight();
-        yl2.setEnabled(false);
-
-
-        //getAllParseData();
+        setHasOptionsMenu(true);
+        getAllParseData();
 
         return rootView;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                getAllParseData();
+                Log.i("refresh", "clicked");
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private ArrayList<String> getXAxisValues(List<ParseObject> mNumbers) {
+        ArrayList<String> xAxis = new ArrayList<String>();
+        for (int i = 1; i <= 24; i++) {
+            xAxis.add(i + "");
+        }
+
+        return xAxis;
+    }
+
     public void getAllParseData() {
         ParseQuery<ParseObject> query = ParseQuery.getQuery("RandomNumbers");
-        query.setLimit(15);
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> parseObjects, ParseException e) {
                 if (e == null) {
                     mNumbers = parseObjects;
-                    mNumbersForGraph = new ArrayList<String>();
-                    int i = 0;
-                    for (ParseObject obj : mNumbers) {
-                        mNumbersForGraph.add(obj.getString("number"));
-                        //Log.i("parse object", obj.getString("number"));
-                    }
+
+                    setData(mNumbers);
                 } else {
                     Log.i("parse error in Graph fragment", e.getMessage());
                 }
             }
         });
+    }
+
+    private void setData(List<ParseObject> mNumbers) {
+        chart = (BarChart) getView().findViewById(R.id.chart);
+        ArrayList<BarDataSet> dataSet = null;
+        valueSet1 = new ArrayList<BarEntry>();
+
+        int i = 0;
+        for (ParseObject s : mNumbers) {
+            BarEntry v1e1 = new BarEntry(Integer.parseInt(s.getString("number")), i);
+            valueSet1.add(v1e1);
+            i++;
+        }
+
+        BarDataSet barDataSet1 = new BarDataSet(valueSet1, "Number");
+        barDataSet1.setColor(Color.rgb(0, 155, 0));
+
+        dataSet = new ArrayList<BarDataSet>();
+        dataSet.add(barDataSet1);
+
+        BarData data = new BarData(getXAxisValues(mNumbers), dataSet);
+
+        // enable touch gestures
+        chart.setTouchEnabled(true);
+
+        // enable dragging and scaling
+        chart.setDragEnabled(true);
+        chart.setScaleEnabled(true);
+        chart.setDrawGridBackground(false);
+
+        // enable pinch to zoom
+        chart.setPinchZoom(true);
+
+        chart.setData(data);
+
+        // enable the way the chart know the values has changed
+        chart.notifyDataSetChanged();
+
+        // limit no of visible entries
+        chart.setVisibleXRange(6);
+
+        // scroll to last entry
+        chart.moveViewToX(data.getXValCount() - 7);
+
+        chart.setDescription("My Chart");
+        chart.animateXY(800, 800);
+        chart.invalidate();
     }
 }

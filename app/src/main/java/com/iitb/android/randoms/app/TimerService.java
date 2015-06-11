@@ -15,7 +15,7 @@ import java.util.TimerTask;
 
 public class TimerService extends Service {
 
-    public static final long NOTIFY_INTERVAL = 5 * 1000; // 5 seconds
+    public static final long NOTIFY_INTERVAL = 3 * 1000; // 5 seconds
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
     private Intent intent;
