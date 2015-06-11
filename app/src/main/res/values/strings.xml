@@ -5,5 +5,6 @@
     <string name="title_section1">Number</string>
     <string name="title_section2">Analysis</string>
     <string name="action_settings">refresh</string>
+    <string name="welcome_random_text">This Hours Random Number</string>
 
 </resources>
